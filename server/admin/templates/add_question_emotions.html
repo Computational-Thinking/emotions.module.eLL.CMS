@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block js %}
+
+{% endblock js %}
+
+{% block core %}
+<style>
+    .user_response {
+
+        .container_rows {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .container_column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .delete {
+            background-color: #ff0000;
+        }
+
+        
+        .delete:hover {
+            background-color: #a30202;
+        }
+        
+        .add {
+            background-color: #47be22;
+            margin-bottom: 10px;
+        }
+
+        .add:hover {
+            background-color: #06740b;
+
+        }
+
+        .margin-elements {
+            margin: 10px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Estilos para inputs */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        /* Estilos para inputs tipo checkbox */
+        input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.5);
+            /* Ajusta el tamaño del checkbox */
+        }
+
+        /* Estilos para inputs tipo radio */
+        input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.5);
+            /* Ajusta el tamaño del radio button */
+        }
+
+        /* Estilos para inputs tipo botón */
+        input[type="button"],
+        input[type="submit"],
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        input[type="button"]:hover,
+        input[type="submit"]:hover,
+        button:hover {
+            background-color: #0056b3;
+        }
+    }
+    
+</style>
+
+<div class="user_response">
+
+    <div class="core_title">
+        <h1>Creador de nueva herramienta de evaluación</h1>
+    </div>
+
+
+    <div class="container container_column" style="margin-bottom: 20px;">
+        <h2>Exportar Cuestionario</h2>
+        <p>Puedes export un cuestionario ya existente, este archivo json contendrá toda la información.</p>
+
+        <div class="container_row">
+
+            <select id="select_emotion">
+                {% for form_emotion in forms_emotions %}
+                <option value="{{ form_emotion.id }}|{{ form_emotion.name }}|{{ form_emotion.questions }}">{{
+                    form_emotion.name }}</option>
+                {% endfor %}
+            </select>
+            <button id="export_button" onclick="descargarContenido()">Exportar JSON</button>
+        </div>
+    </div>
+
+
+    <form enctype="multipart/form-data" action="{{ url("contest", "emotions" ) }}" method="POST"
+        name="add_question_emotions">
+        {{ xsrf_form_html|safe }}
+
+        <div class="container">
+
+            <input type="hidden" id="name_questionnaire" name="name_questionnaire">
+            <div class="container_column">
+                <h2>Importar Cuestionario</h3>
+                <p>Puedes importar el json correctamente formateado en lugar de crear pregunta a pregunta.</p>
+                <input type="file" id="fileInput" accept=".json">
+                <button id="upload_json_questionary">Subir cuestionario</button>
+            </div>
+            <br>
+            <input type="hidden" id="json_data" name="json_data">
+        </div>
+
+
+
+        <br>
+        <div class="container container_column">
+
+            <h2>Crear Cuestionario</h2>
+            <p>Puedes crear un cuestionario desde cero.</p>
+            <div class="container_rows">
+
+                <div class="container_column">
+                    <label>Nombre del cuestionario </label>
+                    <input type="text" id="name_questionnaire_create" name="name_questionnaire_create">
+                </div>
+                <div class="container_column">
+
+                    <button type="button" id="addQuestion">Añadir pregunta</button>
+                    <button type="button" id="createJSON">Crear formulario</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+
+
+
+
+    <div id="questionsContainer">
+        <h2 id="num_questions"></h2>
+    </div>
+</div>
+
+<script id="forms_emotions_data" type="application/json">{{ forms_emotions|safe }}</script>
+<script>
+    function descargarContenido() {
+        const select = document.getElementById('select_emotion');
+        const selectedOption = select.options[select.selectedIndex];
+        const content_questionnaire_export = selectedOption.value;
+        const [id, name, questionsStr] = content_questionnaire_export.split('|');
+        const questions = JSON.parse(questionsStr); // Convertir la cadena de preguntas a un array JSON
+        const formData = {
+            id: id,
+            name: name,
+            questions: questions
+        };
+        const blob = new Blob([JSON.stringify(formData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${name}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+
+    function uploadQuestionary(event) {
+        event.preventDefault(); 
+
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (file) {
+            const paragraphErrorFileImport = document.getElementById("paragraphErrorFileImport")
+            if (paragraphErrorFileImport) {
+                errors_container.removeChild(paragraphErrorFileImport);
+            }
+
+            const reader = new FileReader();
+            reader.readAsText(file, "UTF-8");
+            reader.onload = function (evt) {
+                try {
+
+                    const json = JSON.parse(evt.target.result);
+
+                    console.log(json)
+                    document.getElementById('name_questionnaire').value = json.name
+                    const { questions } = json
+                    var json_result = JSON.stringify(questions);
+                    console.log(json_result); // Muestra el JSON resultante en la consola (para fines de demostración)
+                    document.getElementById('json_data').value = json_result;
+
+                    document.forms['add_question_emotions'].submit();
+                } catch (error) {
+                    console.error("El archivo JSON no tiene una estructura válida:", error);
+                    alert("El archivo JSON no tiene una estructura válida.");
+                }
+
+            }
+            reader.onerror = function (evt) {
+                console.error("Error al leer el archivo:", evt);
+            }
+        } else {
+            alert('Por favor, suba un archivo para poder importarlo');
+            return
+        }
+
+    }
+
+    document.getElementById('upload_json_questionary').addEventListener('click', uploadQuestionary)
+
+    function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]); // Eliminar el encabezado "data:image/png;base64,"
+            reader.onerror = error => reject(error);
+        });
+    }
+    var num_questions = 0;
+    document.getElementById('createJSON').addEventListener('click', async function (event) {
+        event.preventDefault()
+        const name_questionnaire = document.getElementById("name_questionnaire_create").value
+
+        if (name_questionnaire === "") {
+            alert('Por favor, introduzca un nombre para el concurso antes de crearlo');
+            return
+        }
+        if (num_questions < 1) {
+            alert('Por favor, el formulario debe tener al menos una pregunta');
+            return
+        } 
+
+        // Objeto para almacenar los datos del formulario
+        var form_result = {
+            number_questions: num_questions,
+            questions: []
+        };
+
+        // Recorre cada pregunta del formulario
+        for (var i = 1; i <= num_questions; i++) {
+            var questionDiv = document.getElementById(`question_${i}`);
+            var questionType = document.getElementById(`question_${i}_type`).value;
+            var description = document.getElementById(`question_${i}_description`).value;
+
+            // Obtener el elemento de entrada de archivo
+            var input = document.getElementById(`question_${i}_image`);
+            // Verificar si se seleccionó un archivo
+            if (input.files && input.files[0]) {
+                var file = input.files[0];
+                var base64String = await readFileAsBase64(file); // Leer el archivo y obtener la cadena base64
+
+            } else {
+                var base64String = null
+            }
+
+            // Objeto para almacenar detalles de la pregunta
+            var questionDetails = {
+                type: questionType
+            };
+
+            questionDetails.id = i
+            questionDetails.statement = description
+            questionDetails.image = base64String
+
+
+            // Agrega detalles específicos según el tipo de pregunta
+            if (questionType === 'options_text') {
+                // Agrega opciones de texto
+                var options = [];
+                var optionInputs = questionDiv.querySelectorAll(`#questionFields_${i} input[type=text]`);
+                optionInputs.forEach(function (input) {
+                    options.push(input.value);
+                });
+                questionDetails.options = options;
+            } else if (questionType === 'range') {
+                // Agrega valores mínimo y máximo para el rango
+                questionDetails.min = questionDiv.querySelector(`input[name=range_min_${i}]`).value;
+                questionDetails.max = questionDiv.querySelector(`input[name=range_max_${i}]`).value;
+            }
+
+            // Almacena los detalles de la pregunta en el objeto form_result
+            form_result.questions.push(questionDetails);
+        }
+
+        // Convierte el objeto form_result a JSON
+        var json_result = JSON.stringify(form_result);
+        console.log(json_result); // Muestra el JSON resultante en la consola (para fines de demostración)
+
+
+        document.getElementById('json_data').value = json_result;
+
+
+        // Envía el formulario automáticamente
+        document.forms['add_question_emotions'].submit();
+    });
+
+    document.getElementById('addQuestion').addEventListener('click', function (event) {
+        event.preventDefault();
+        num_questions++;
+        var num_questions_title = document.getElementById('num_questions');
+        num_questions_title.textContent = `Número de preguntas ${num_questions}`
+        var questionsContainer = document.getElementById('questionsContainer');
+
+        var questionIndex = questionsContainer.children.length;
+
+        var questionDiv = document.createElement('div');
+        questionDiv.id = `question_${questionIndex}`;
+        questionDiv.innerHTML = `
+        <hr>
+        <div class="container container_column" >
+            <label for="question_${questionIndex}_type">Tipo de pregunta:</label>
+            <select id="question_${questionIndex}_type" name="question_${questionIndex}_type">
+                <option value="yes_no">Sí/No</option>
+                <option value="true_false">Verdadero/Falso</option>
+                <option value="options_text">Opciones de texto</option>
+                <option value="text">Introducir un texto</option>
+                <option value="range">Rango</option>
+            </select>
+            <button type="button" id="deleteQuestion" class="delete">Eliminar pregunta</button>
+            <br>
+            <label for="question_${questionIndex}_description">Descripción de la pregunta:</label>
+            <input type="text" id="question_${questionIndex}_description" name="question_${questionIndex}_description" required>
+            <br>
+            <label for="question_${questionIndex}_image">Selecciona una imagen (opcional):</label>
+            <input type="file" id="question_${questionIndex}_image" name="question_${questionIndex}_image" accept="image/*">
+            <br>
+            <div id="questionFields_${questionIndex}"></div>
+        </div>
+    `;
+        questionsContainer.appendChild(questionDiv);
+
+        var deleteButton = questionDiv.querySelector('#deleteQuestion');
+        deleteButton.addEventListener('click', function () {
+            num_questions--;
+            var num_questions_title = document.getElementById('num_questions');
+            num_questions_title.textContent = `Número de preguntas ${num_questions}`
+            questionDiv.remove();
+        });
+
+        var questionTypeSelect = questionDiv.querySelector(`#question_${questionIndex}_type`);
+        questionTypeSelect.addEventListener('change', function () {
+            var questionFieldsContainer = document.getElementById(`questionFields_${questionIndex}`);
+            var questionType = this.value;
+            questionFieldsContainer.innerHTML = '';
+
+            if (questionType === 'options_text') {
+                var addOptionButton = document.createElement('button');
+                addOptionButton.textContent = 'Añadir opción';
+                addOptionButton.className = "add"
+                addOptionButton.addEventListener('click', function () {
+                    var currentNumOptions = questionFieldsContainer.querySelectorAll('input[type=text]').length;
+
+                    var optionInput = document.createElement('input');
+                    optionInput.type = 'text';
+                    optionInput.className = "margin-elements"
+                    optionInput.name = `option_${questionIndex}_${currentNumOptions}`;
+                    optionInput.required = true;
+                    optionInput.placeholder = `Opción ${currentNumOptions + 1}`;
+                    questionFieldsContainer.appendChild(optionInput);
+                    var deleteOptionButton = document.createElement('button'); // Paso 1: Crear botón eliminar opción
+                    deleteOptionButton.textContent = 'Eliminar opción'; // Puedes personalizar el texto del botón
+                    deleteOptionButton.className = "delete"
+                    deleteOptionButton.addEventListener('click', function () { // Paso 2: Agregar evento de clic para eliminar opción
+                        questionFieldsContainer.removeChild(optionInput); // Paso 3: Eliminar la opción del contenedor
+                        questionFieldsContainer.removeChild(br); // También puedes eliminar el elemento <br> correspondiente
+                        questionFieldsContainer.removeChild(deleteOptionButton); // Eliminar el botón de eliminar opción
+                    });
+                    questionFieldsContainer.appendChild(deleteOptionButton);
+
+                    var br = document.createElement('br');
+                    questionFieldsContainer.appendChild(br);
+                });
+                questionFieldsContainer.appendChild(addOptionButton);
+
+                var br = document.createElement('br');
+                questionFieldsContainer.appendChild(br);
+
+                var optionInput = document.createElement('input');
+                optionInput.type = 'text';
+                optionInput.name = `option_${questionIndex}_0`;
+                optionInput.placeholder = 'Opción 1';
+                optionInput.required = true;
+                questionFieldsContainer.appendChild(optionInput);
+
+                br = document.createElement('br');
+                questionFieldsContainer.appendChild(br);
+
+
+            } else if (questionType === 'range') {
+                var rangeMinLabel = document.createElement('label');
+                rangeMinLabel.textContent = 'Valor mínimo:';
+                questionFieldsContainer.appendChild(rangeMinLabel);
+
+                var rangeMinInput = document.createElement('input');
+                rangeMinInput.type = 'number';
+                rangeMinInput.name = `range_min_${questionIndex}`;
+                rangeMinInput.placeholder = 'Valor mínimo';
+                rangeMinInput.required = true;
+                questionFieldsContainer.appendChild(rangeMinInput);
+
+                var br = document.createElement('br');
+                questionFieldsContainer.appendChild(br);
+
+                var rangeMaxLabel = document.createElement('label');
+                rangeMaxLabel.textContent = 'Valor máximo:';
+                questionFieldsContainer.appendChild(rangeMaxLabel);
+
+                var rangeMaxInput = document.createElement('input');
+                rangeMaxInput.type = 'number';
+                rangeMaxInput.name = `range_max_${questionIndex}`;
+                rangeMaxInput.placeholder = 'Valor máximo';
+                rangeMaxInput.required = true;
+                questionFieldsContainer.appendChild(rangeMaxInput);
+
+                br = document.createElement('br');
+                questionFieldsContainer.appendChild(br);
+            }
+        });
+    });
+
+</script>
+
+
+
+{% endblock core %}

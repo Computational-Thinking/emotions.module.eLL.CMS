@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block core %}
+
+<style>
+    .user_response {
+
+        .container_rows {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .container_column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 80%;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .delete {
+            background-color: #ff0000;
+        }
+
+
+        .delete:hover {
+            background-color: #a30202;
+        }
+
+        .add {
+            background-color: #47be22;
+        }
+
+        .add:hover {
+            background-color: #06740b;
+
+        }
+
+        .margin-elements {
+            margin: 10px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.5);
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.5);
+        }
+
+        input[type="button"],
+        input[type="submit"],
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        input[type="button"]:hover,
+        input[type="submit"]:hover,
+        button:hover {
+            background-color: #0056b3;
+        }
+
+
+
+
+    }
+
+    .contenedor-imagenes {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .imagen {
+        position: relative;
+
+        margin: 10px;
+    }
+
+    .imagen img {
+        width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        /* Fondo oscuro semi-transparente */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        /* Inicialmente invisible */
+        transition: opacity 0.3s ease;
+        /* Efecto de transición suave */
+    }
+
+    .overlay:hover {
+        opacity: 1;
+        /* Hacer visible al pasar el cursor */
+    }
+
+    .mensaje {
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .aviso {
+        background-color: #f2f2f2;
+        /* Color de fondo */
+        color: #333;
+        /* Color del texto */
+        padding: 10px;
+        /* Espaciado interno */
+        border: 1px solid #ccc;
+        /* Borde */
+        border-radius: 5px;
+        /* Bordes redondeados */
+        margin-bottom: 10px;
+        /* Margen inferior */
+    }
+</style>
+
+
+<div class="span9 task_description user_response">
+
+    <div class="core_title">
+        <h1>Respuesta del usuario: {{username}}</h1> 
+        <h1>En la tarea: {{task_name}}</h1>
+        <h1>Para el cuestionario: {{ name }}</h1>
+    </div>
+
+    <div class="contenedor-imagenes">
+
+
+        <input type="hidden" id="number_questions" name="number_questions" value="{{ questions|length }}" />
+        {% for question in questions %}
+        <div class="container container_column">
+
+            <h2>{{ question.statement }}</h2>
+            <br>
+
+
+            {% if question.image %}
+
+            <div class="imagen">
+
+                <img src="data:image/png;base64,{{ question.image }}" alt="Imagen de la pregunta {{ question.id }}"
+                    onclick="openModal('data:image/png;base64,{{ question.image }}')">
+                <div class="overlay">
+                    <span class="mensaje">Haz clic para ampliar</span>
+                </div>
+            </div>
+
+            {% endif %}
+
+
+
+            <div class="container_rows">
+                <p>La selección del usuario es: </p>
+                <p>{{ question.result }}</p>
+            </div>
+
+        </div>
+
+        <br><br>
+        {% endfor %}
+    </div>
+
+
+</div>
+
+<script>
+    document.querySelectorAll(".imagen").forEach(function (imagen) {
+        var img = imagen.querySelector("img");
+        var overlay = imagen.querySelector(".overlay");
+
+        img.addEventListener("click", function () {
+            if (this.requestFullscreen) {
+                this.requestFullscreen();
+            } else if (this.mozRequestFullScreen) {
+                this.mozRequestFullScreen();
+            } else if (this.webkitRequestFullscreen) {
+                this.webkitRequestFullscreen();
+            } else if (this.msRequestFullscreen) {
+                this.msRequestFullscreen();
+            }
+        });
+
+        overlay.addEventListener("click", function (event) {
+            event.stopPropagation(); // Evitar que se propague el evento al hacer clic en el overlay
+            img.click(); // Simular clic en la imagen para expandirla a pantalla completa
+        });
+    });
+
+</script>
+
+
+
+{% endblock core %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block core %}
+
+<div class="core_title">
+    <h1>Herreminetas de evaluación</h1>
+</div>
+
+<table class="bordered">
+    <thead>
+        <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Title</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for form in forms_emotions %}
+        <tr>
+            <td>
+                <input type="radio" name="task_id" value="{{ form.id }}" />
+            </td>
+            <td><a href="{{ url("task", form.id) }}">{{ form.id }}</a></td>
+            <td>{{ form.name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock core %}

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block core %}
+
+<style>
+    .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 20px;
+        gap: 20px;
+    }
+
+    .filter-container div {
+        display: flex;
+        margin-bottom: 5px;
+        flex: 0 0 auto;
+        max-width: 250px;
+        flex-direction: column;
+    }
+
+    .filter-container input {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: 180px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .filter-container input[type="number"] {
+        -moz-appearance: textfield;
+    }
+
+    .filter-container input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div class="core_title">
+    <h1>Submissions of emotions</h1>
+</div>
+
+<div class="filter-container">
+    <div>
+        <label for="user_filter">Filtrar por Usuario:</label>
+        <input type="text" id="user_filter" oninput="filterEmotions()"
+            placeholder="ID del participante o Nombre del participante">
+    </div>
+
+    <div>
+        <label for="task_filter">Filtrar por Tarea:</label>
+        <input type="text" id="task_filter" oninput="filterEmotions()"
+            placeholder="ID de la tarea o Nombre de la tarea">
+    </div>
+
+    <div>
+        <label for="emotion_filter">Filtrar por Emociones:</label>
+        <input type="text" id="emotion_filter" oninput="filterEmotions()"
+            placeholder="ID del formulario o Nombre del formulario">
+    </div>
+</div>
+
+
+<ul id="emotionsList" >
+    {% for emotion in all_emotions %}
+    <li class="emotion" data-participation="{{ emotion.user_id }}" data-username="{{ emotion.user.username|lower }}"
+        data-task="{{ emotion.task_id }}" data-task-name="{{ emotion.task.name|lower }}"
+        data-form-emotion="{{ emotion.form_emotion_id }}"
+        data-form-emotion-name="{{ emotion.form_emotion.name|lower }}">
+        <p><strong>Hora de subida:</strong> {{ emotion.emotion_timestamp }}</p>
+        <p><strong>ID del participante:</strong> {{ emotion.user_id }}</p>
+        <p><strong>Nombre del participante:</strong> {{ emotion.user.username }}</p>
+        <p><strong>Task ID:</strong> {{ emotion.task_id }}</p>
+        <p><strong>Task Nombre:</strong> {{ emotion.task.name }}</p>
+        <p><strong>ID del formulario:</strong> {{ emotion.form_emotion_id }}</p>
+        <p><strong>Nombre del formulario:</strong> {{ emotion.form_emotion.name }}</p>
+        <p><strong>Emociones:</strong>
+        <ul>
+            {% for key, value in emotion.emotions.items() %}
+            <li>{{ key }}: {{ value }}</li>
+            {% endfor %}
+        </ul>
+        </p>
+        <form enctype="multipart/form-data" action="{{ url('contest', emotion.contest_id, 'emotions_submissions', emotion.id) }}" method="POST"
+        name="view_emotion_context">
+        {{ xsrf_form_html|safe }}
+            <input hidden type="text" value="{{emotion.task.name}}" id="task_name_value" name="task_name_value"/>
+            <input hidden type="text" value="{{emotion.user.username}}" id="username_value" name="username_value"/>
+            <input hidden type="number" value="{{emotion.form_emotion_id}}" id="form_emotion_id_value" name="form_emotion_id_value"/>
+            <input hidden type="text" value="{{emotion.emotions}}" id="emotions_value" name="emotions_value"/>
+            <button>Ver en su contexto</button>
+        </form>
+        <hr>
+    </li>
+    {% endfor %}
+</ul>
+
+<script>
+    function filterEmotions() {
+        var userFilter = document.getElementById('user_filter').value.trim().toLowerCase();
+        var taskFilter = document.getElementById('task_filter').value.trim().toLowerCase();
+        var emotionFilter = document.getElementById('emotion_filter').value.trim().toLowerCase();
+        var emotions = document.getElementsByClassName('emotion');
+
+        for (var i = 0; i < emotions.length; i++) {
+            var participation = emotions[i].getAttribute('data-participation').toLowerCase();
+            var username = emotions[i].getAttribute('data-username');
+            var task = emotions[i].getAttribute('data-task').toLowerCase();
+            var taskName = emotions[i].getAttribute('data-task-name').toLowerCase();
+            var formEmotions = emotions[i].getAttribute('data-form-emotion');
+            var formEmotionName = emotions[i].getAttribute('data-form-emotion-name');
+
+            if ((participation.includes(userFilter) || username.includes(userFilter)) &&
+                (task.includes(taskFilter) || taskName.includes(taskFilter)) &&
+                (formEmotions.includes(emotionFilter) || formEmotionName.includes(emotionFilter))) {
+                emotions[i].style.display = 'block';
+            } else {
+                emotions[i].style.display = 'none';
+            }
+        }
+    }
+
+    
+</script>
+
+{% endblock core %}
