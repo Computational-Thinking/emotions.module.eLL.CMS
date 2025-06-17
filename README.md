@@ -8,6 +8,15 @@ Emotions Module for the eLL-CMS Sytems
 
 ### Co-Tutor: Rafael Herrero Alvarez
 
+## New version 2.0
+
+eLL-CMS has been updated to be compatible with the latest version of cms available as of June 2025 (1.5.0). For installing cms, it is recommended to follow the instructions available in the [official documentation](https://cms.readthedocs.io/en/v1.5/).
+
+In addition, the `v1.5.0.tar.gz` file in this repository contains a copy of cms version 1.5.0.
+
+To install eLL-CMS (v2.0), simply download this repository, replace the `cms` folder within the cms system, and proceed with the corresponding installation.
+
+---
 
 ## Demo
 
